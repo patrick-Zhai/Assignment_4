@@ -7,6 +7,7 @@ from openai_client import analyze_paper_set
 
 # Based on the official MCP Python SDK quickstart:
 # https://github.com/modelcontextprotocol/python-sdk
+# mcp dev src/server.py
 
 mcp = MCPServer("Academic Research Assistant")
 
@@ -77,3 +78,43 @@ def analyze_papers(
         papers=papers,
         research_question=research_question,
     )
+
+
+@mcp.prompt()
+def literature_review(
+    topic: str,
+    research_question: str,
+) -> str:
+    """
+    Create a structured prompt for conducting a small academic literature review.
+    """
+
+    return f"""
+Conduct a focused academic literature review on the following topic:
+
+Topic:
+{topic}
+
+Research question:
+{research_question}
+
+Use the available MCP tools as follows:
+
+1. Use search_papers to find relevant academic papers.
+2. Review the returned paper metadata and select the most relevant papers.
+3. Use analyze_papers to compare and synthesize the selected papers.
+4. Clearly distinguish between:
+   - information directly supported by the retrieved metadata, and
+   - interpretations or limitations caused by missing abstracts or full text.
+5. Do not invent methods, findings, datasets, or conclusions that are not
+   available in the retrieved information.
+
+Your final response should contain:
+
+- A short overview of the literature
+- Main themes
+- Important similarities and differences
+- Papers most relevant to the research question
+- Limitations of the available evidence
+- A short conclusion
+"""
