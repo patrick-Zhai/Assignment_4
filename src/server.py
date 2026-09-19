@@ -4,6 +4,13 @@ from openalex_client import search_works
 
 from openai_client import analyze_paper_set
 
+from security import (
+sanitize_search_query,
+validate_paper_limit,
+sanitize_research_question,
+validate_paper_list,
+)
+
 
 # Based on the official MCP Python SDK quickstart:
 # https://github.com/modelcontextprotocol/python-sdk
@@ -22,24 +29,15 @@ def hello(name: str) -> str:
 def search_papers(query: str, limit: int = 5) -> list[dict]:
     """
     Search for academic papers related to a research topic.
-
-    Args:
-        query: Research topic or keywords.
-        limit: Number of papers to return, between 1 and 10.
     """
 
-    query = query.strip()
+    safe_query = sanitize_search_query(query)
+    safe_limit = validate_paper_limit(limit)
 
-    if not query:
-        raise ValueError("Search query cannot be empty.")
-
-    if len(query) > 200:
-        raise ValueError("Search query must be 200 characters or fewer.")
-
-    if limit < 1 or limit > 10:
-        raise ValueError("Limit must be between 1 and 10.")
-
-    return search_works(query=query, limit=limit)
+    return search_works(
+        query=safe_query,
+        limit=safe_limit,
+    )
 
 
 @mcp.tool()
@@ -49,34 +47,14 @@ def analyze_papers(
 ) -> str:
     """
     Analyze academic paper metadata in relation to a research question.
-
-    Args:
-        papers: A list of paper metadata, typically returned by search_papers.
-        research_question: The research question guiding the analysis.
-
-    Returns:
-        A synthesized analysis based only on the supplied paper metadata.
     """
 
-    if not papers:
-        raise ValueError("At least one paper is required for analysis.")
-
-    if len(papers) > 10:
-        raise ValueError("A maximum of 10 papers can be analyzed at once.")
-
-    research_question = research_question.strip()
-
-    if not research_question:
-        raise ValueError("Research question cannot be empty.")
-
-    if len(research_question) > 500:
-        raise ValueError(
-            "Research question must be 500 characters or fewer."
-        )
+    safe_papers = validate_paper_list(papers)
+    safe_question = sanitize_research_question(research_question)
 
     return analyze_paper_set(
-        papers=papers,
-        research_question=research_question,
+        papers=safe_papers,
+        research_question=safe_question,
     )
 
 
